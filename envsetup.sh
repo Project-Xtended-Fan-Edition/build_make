@@ -776,6 +776,19 @@ function lunch()
 {
     local answer
 
+    choices=()
+    for makefile_target in $(TARGET_BUILD_APPS= TARGET_PRODUCT= TARGET_BUILD_VARIANT= get_build_var COMMON_LUNCH_CHOICES 2>/dev/null)
+    do
+        choices+=($makefile_target)
+    done
+    for var in user userdebug eng;
+    do
+        if [[ " ${choices[*]} " != *"aosp_$device-$var"* ]];
+        then
+            choices+=("aosp_$device-$var")
+        fi
+    done
+
     if [[ $# -gt 1 ]]; then
         echo "usage: lunch [target]" >&2
         return 1
@@ -832,17 +845,7 @@ function lunch()
 
     if ! check_product $product $release
     then
-        # if we can't find a product, try to grab it off the LineageOS GitHub
-        T=$(gettop)
-        cd $T > /dev/null
-        vendor/lineage/build/tools/roomservice.py $product
-        cd - > /dev/null
-        check_product $product $release
-    else
-        T=$(gettop)
-        cd $T > /dev/null
-        vendor/lineage/build/tools/roomservice.py $product true
-        cd - > /dev/null
+        return 1
     fi
 
     TARGET_PRODUCT=$product \
